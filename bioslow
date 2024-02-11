@@ -27,6 +27,7 @@ parser.add_argument("-t", "--threshold", default=1, type=int,
         help="log requests which took longer than this (default: 1µs)")
 parser.add_argument("-l", "--logfile",
         help="number of outputs")
+parser.add_argument('-u', "--unit", choices=['us', 'ms', 's'])
 #parser.add_argument("count", nargs="?", default=-1,
 #    help="number of outputs")
 #parser.add_argument("-j", "--json", action="store_true",
@@ -57,12 +58,23 @@ void trace_stop(struct pt_regs *ctx, struct request *req) {
     tsp = start.lookup(&req);
     if (tsp != 0) {
         delta = bpf_ktime_get_ns() - *tsp;
+        FACTOR
         bpf_trace_printk("%d %x %d\\n", 
-            req->__data_len, req->cmd_flags, delta / 1000);
+            req->__data_len, req->cmd_flags, delta);
         start.delete(&req);
     }
 }
 '''
+
+if args.unit == "s":
+    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000000;')
+    label = "secs"
+elif args.unit == "ms":
+    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000;')
+    label = "msecs"
+else:
+    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000;')
+    label = "usecs"
 
 print("\nTracing ... Ctrl-C to end.")
 
@@ -91,12 +103,14 @@ if args.logfile:
 start_time = datetime.now()
 while 1:
     (task, pid, cpu, flags, ts, msg) = b.trace_fields()
-    (req_size, req_flags, req_time_us) = msg.decode('ASCII').split()
+    (req_size, req_flags, req_time) = msg.decode('ASCII').split()
     td_ts = timedelta(microseconds=ts)
-    if int(req_time_us) >= args.threshold:
+
+    if int(req_time) >= args.threshold:
         log_time = start_time + td_ts
-        log_string = f"{log_time}: Size: {req_size}, Flags: Duration {req_time_us} µs"
-        print(rog_string)
+        log_string = f"{log_time}: {req_time} {label}"
+        print(log_string)
+
         if logfile:
             logfile.write(log_string)
             logfile.write("\n")
