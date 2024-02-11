@@ -12,6 +12,29 @@
 from __future__ import print_function
 from datetime import datetime, timedelta
 from bcc import BPF
+import argparse
+
+# arguments
+examples = """examples:
+    ./bioslow                    # print latency of I/O operations
+    ./bioslow -t 10              # print I/O operations longer than 10us
+"""
+parser = argparse.ArgumentParser(
+    description="Log slow I/O operations over a given threshold",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog=examples)
+parser.add_argument("-t", "--threshold", default=1, type=int,
+        help="log requests which took longer than this (default: 1µs)")
+parser.add_argument("-l", "--logfile",
+        help="number of outputs")
+#parser.add_argument("count", nargs="?", default=-1,
+#    help="number of outputs")
+#parser.add_argument("-j", "--json", action="store_true",
+#    help="json output")
+#parser.add_argument("-d", "--disk", type=str,
+#    help="Trace this disk only")
+
+args = parser.parse_args()
 
 REQ_WRITE = 1       # from include/linux/blk_types.h
 
@@ -34,8 +57,8 @@ void trace_stop(struct pt_regs *ctx, struct request *req) {
     tsp = start.lookup(&req);
     if (tsp != 0) {
         delta = bpf_ktime_get_ns() - *tsp;
-        bpf_trace_printk("%d %x %d\\n", req->__data_len, 
-            req->cmd_flags, delta / 1000);
+        bpf_trace_printk("%d %x %d\\n", 
+            req->__data_len, req->cmd_flags, delta / 1000);
         start.delete(&req);
     }
 }
@@ -66,5 +89,7 @@ while 1:
     (task, pid, cpu, flags, ts, msg) = b.trace_fields()
     (req_size, req_flags, req_time_us) = msg.decode('ASCII').split()
     td_ts = timedelta(microseconds=ts)
-    log_time = start_time + td_ts
-    print(f"{log_time}: Duration {req_time_us} µs")
+    if int(req_time_us) >= args.threshold:
+        log_time = start_time + td_ts
+        log_string = f"{log_time}: Size: {req_size}, Flags: Duration {req_time_us} µs"
+        print(log_string)
