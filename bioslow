@@ -18,6 +18,8 @@ import argparse
 examples = """examples:
     ./bioslow                    # print latency of I/O operations
     ./bioslow -t 10              # print I/O operations longer than 10us
+    ./bioslow -t 100 -u ms       # print I/O operations longer than 100ms
+    ./bioslow -l foo.log         # log to a file instread of stdout
 """
 parser = argparse.ArgumentParser(
     description="Log slow I/O operations over a given threshold",
