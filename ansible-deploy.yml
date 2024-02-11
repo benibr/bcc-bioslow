@@ -1,0 +1,55 @@
+- name: install/uninstall bioslow.py on remote hosts
+  hosts: all
+  gather_facts: no
+  become: true
+
+  vars:
+    state: present
+    bioslow_args: "-u ms -t 100"
+
+  tasks:
+    - name: install depencies
+      vars:
+        pkgs:
+          - bcc
+      package:
+        name: "{{ pkgs }}"
+
+    - name: install script
+      copy:
+        src: bioslow
+        dest: /usr/local/bin/bioslow
+        owner: root
+        mode: "0755"
+      when: state == "present"
+
+    - name: uninstall script
+      file:
+        path: /etc/systemd/system/bioslow.service
+        state: "{{ state }}"
+      when: state == "absent"
+
+    - name: install systemd service
+      template:
+        src: bioslow.service.j2
+        dest: /etc/systemd/system/bioslow.service
+      when: state == "present"
+
+    - name: uninstall systemd service
+      file:
+        path: /etc/systemd/system/bioslow.service
+        state: "{{ state }}"
+      when: state == "absent"
+
+    - name: start systemd service 
+      systemd:
+        daemon_reload: true
+        service: "bioslow"
+        state: "restarted"
+      when: state == "present"
+
+    - name: start systemd service 
+      systemd:
+        service: "bioslow"
+        state: "stopped"
+      when: state == "absent"
