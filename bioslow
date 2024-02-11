@@ -84,6 +84,10 @@ else:
 #b.attach_kprobe(event="blk_mq_end_request_batch", fn_name="trace_stop")
 #b.attach_kprobe(event="blk_mq_complete_request", fn_name="trace_stop")
 
+logfile = None
+if args.logfile:
+    logfile = open(args.logfile, "at")
+
 start_time = datetime.now()
 while 1:
     (task, pid, cpu, flags, ts, msg) = b.trace_fields()
@@ -92,4 +96,8 @@ while 1:
     if int(req_time_us) >= args.threshold:
         log_time = start_time + td_ts
         log_string = f"{log_time}: Size: {req_size}, Flags: Duration {req_time_us} µs"
-        print(log_string)
+        print(rog_string)
+        if logfile:
+            logfile.write(log_string)
+            logfile.write("\n")
+            logfile.flush()
