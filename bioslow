@@ -1,5 +1,15 @@
-#!/bin/python
+#!/usr/bin/python3
+# @lint-avoid-python-3-compatibility-imports
+#
+# bioslow    Log slow I/O operations over a given threshold.
+#       For Linux, uses BCC, eBPF.
+#
+# USAGE: bioslow
+#
+# Copyright (c) 2024 Benedikt Braunger.
+# Licensed under the Apache License, Version 2.0 (the "License")
 
+from __future__ import print_function
 from datetime import datetime, timedelta
 from bcc import BPF
 
