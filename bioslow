@@ -110,7 +110,9 @@ while 1:
     if int(req_time) >= args.threshold:
         log_time = start_time + td_ts
         log_string = f"{log_time}: {req_time} {label}"
-        print(log_string)
+
+        if not logfile:
+            print(log_string)
 
         if logfile:
             logfile.write(log_string)
