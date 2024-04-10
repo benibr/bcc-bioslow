@@ -72,13 +72,13 @@ void trace_stop(struct pt_regs *ctx, struct request *req) {
 
 if args.unit == "s":
     bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000000;')
-    label = "secs"
+    unit = "secs"
 elif args.unit == "ms":
     bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000;')
-    label = "msecs"
+    unit = "msecs"
 else:
     bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000;')
-    label = "usecs"
+    unit = "usecs"
 
 print("\nTracing ... Ctrl-C to end.")
 
@@ -114,9 +114,9 @@ while 1:
         log_time = start_time + td_ts
 
         if args.json:
-            log_string = json.dumps({"timestamp": str(log_time), "request_time": req_time, "unit": label})
+            log_string = json.dumps({"timestamp": str(log_time), "request_time": req_time, "unit": unit})
         else:
-            log_string = f"{log_time}: {req_time} {label}"
+            log_string = f"{log_time}: {req_time} {unit}"
 
         if not logfile:
             print(log_string)
