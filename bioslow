@@ -36,6 +36,8 @@ parser.add_argument('-u', "--unit", choices=['us', 'ms', 's'],
 #    help="number of outputs")
 parser.add_argument("-j", "--json", action="store_true",
     help="generate json output")
+parser.add_argument("-p", "--prometheus", action="store_true",
+    help="generate output for prometheus textfile exporter")
 #parser.add_argument("-d", "--disk", type=str,
 #    help="Trace this disk only")
 
@@ -115,6 +117,8 @@ while 1:
 
         if args.json:
             log_string = json.dumps({"timestamp": str(log_time), "request_time": req_time, "unit": unit})
+        elif args.prometheus:
+            log_string = "block_io_slow{unit=%s} %s %s" % (unit, req_time, datetime.timestamp(log_time))
         else:
             log_string = f"{log_time}: {req_time} {unit}"
 
