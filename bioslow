@@ -13,6 +13,7 @@ from __future__ import print_function
 from datetime import datetime, timedelta
 from bcc import BPF
 import argparse
+import json
 
 # arguments
 examples = """examples:
@@ -33,8 +34,8 @@ parser.add_argument('-u', "--unit", choices=['us', 'ms', 's'],
         help="unit of threshold and reported times. Can be 'us', 'ms' or 's'")
 #parser.add_argument("count", nargs="?", default=-1,
 #    help="number of outputs")
-#parser.add_argument("-j", "--json", action="store_true",
-#    help="json output")
+parser.add_argument("-j", "--json", action="store_true",
+    help="generate json output")
 #parser.add_argument("-d", "--disk", type=str,
 #    help="Trace this disk only")
 
@@ -111,7 +112,11 @@ while 1:
 
     if int(req_time) >= args.threshold:
         log_time = start_time + td_ts
-        log_string = f"{log_time}: {req_time} {label}"
+
+        if args.json:
+            log_string = json.dumps({"timestamp": str(log_time), "request_time": req_time, "unit": label})
+        else:
+            log_string = f"{log_time}: {req_time} {label}"
 
         if not logfile:
             print(log_string)
