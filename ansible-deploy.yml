@@ -36,21 +36,21 @@
         dest: /etc/systemd/system/bioslow.service
       when: state == "present"
 
-    - name: uninstall systemd service
-      file:
-        path: /etc/systemd/system/bioslow.service
-        state: "{{ state }}"
-      when: state == "absent"
-
-    - name: start systemd service 
+    - name: start systemd service
       systemd:
         daemon_reload: true
         service: "bioslow"
         state: "restarted"
       when: state == "present"
 
-    - name: start systemd service 
+    - name: stop systemd service
       systemd:
         service: "bioslow"
         state: "stopped"
+      when: state == "absent"
+
+    - name: uninstall systemd service
+      file:
+        path: /etc/systemd/system/bioslow.service
+        state: "{{ state }}"
       when: state == "absent"
