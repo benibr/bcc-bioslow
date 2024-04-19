@@ -82,8 +82,9 @@ else:
     bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000;')
     unit = "usecs"
 
-print("\nTracing ... Ctrl-C to end.")
-
+if not args.prometheus and not args.json:
+    print(f"Logging I/O operations longer than {args.threshold} {unit}")
+    print("\nTracing ... Ctrl-C to end.")
 
 # create BPF program
 b = BPF(text=bpf_text)
@@ -105,9 +106,6 @@ else:
 logfile = None
 if args.logfile:
     logfile = open(args.logfile, "at")
-
-if not args.prometheus and not args.json:
-    print(f"Logging I/O operations longer than {args.threshold}{unit}")
 
 while 1:
     start_time = datetime.now()
