@@ -111,12 +111,17 @@ logfile = None
 if args.logfile:
     logfile = open(args.logfile, "at")
 
+start_ktime=0
+
 while 1:
-    start_time = datetime.now()
     (task, pid, cpu, flags, ts, msg) = b.trace_fields()
+    start_time = datetime.now()
     (req_size, req_flags, req_time) = msg.decode('ASCII').split()
 
-    td_ts = timedelta(seconds=ts)
+    if start_ktime == 0:
+        start_ktime = ts
+
+    td_ts = timedelta(seconds=ts-start_ktime)
 
     if int(req_time) >= args.threshold:
         log_time = start_time + td_ts
