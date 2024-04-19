@@ -5,7 +5,7 @@
 
   vars:
     state: present
-    bioslow_args: "-u ms -t 100"
+    bioslow_args: "-u ms -t 1000"
 
   tasks:
     - name: install depencies
