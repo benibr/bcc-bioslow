@@ -106,6 +106,9 @@ logfile = None
 if args.logfile:
     logfile = open(args.logfile, "at")
 
+if not args.prometheus and not args.json:
+    print(f"Logging I/O operations longer than {args.threshold}{unit}")
+
 while 1:
     start_time = datetime.now()
     (task, pid, cpu, flags, ts, msg) = b.trace_fields()
