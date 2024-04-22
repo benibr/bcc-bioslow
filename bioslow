@@ -59,30 +59,35 @@ void trace_start(struct pt_regs *ctx, struct request *req) {
 }
 
 void trace_stop(struct pt_regs *ctx, struct request *req) {
-    u64 *tsp, delta;
+    u64 *tsp, delta, factor = 0;
 
     tsp = start.lookup(&req);
     if (tsp != 0) {
         delta = bpf_ktime_get_ns() - *tsp;
         FACTOR
-        bpf_trace_printk("%d %x %d\\n", 
-            req->__data_len, req->cmd_flags, delta);
+        if (delta >= factor) {
+            delta /= factor;
+            bpf_trace_printk("%d %d %d\\n",
+                req->__data_len, req->cmd_flags, delta);
+        }
         start.delete(&req);
     }
 }
 '''
 
+
+# FIXME: this failed if devision result is lower than zero
 if args.unit == "s":
-    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000000;')
+    bpf_text = bpf_text.replace('FACTOR', 'factor = 1000000000;')
     unit = "secs"
 elif args.unit == "ms":
-    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000000;')
+    bpf_text = bpf_text.replace('FACTOR', 'factor = 1000000;')
     unit = "msecs"
 elif args.unit == "us":
-    bpf_text = bpf_text.replace('FACTOR', 'delta /= 1000;')
+    bpf_text = bpf_text.replace('FACTOR', 'factor = 1000;')
     unit = "usecs"
 elif args.unit == "ns":
-    bpf_text = bpf_text.replace('FACTOR', '')
+    bpf_text = bpf_text.replace('FACTOR', 'factor = 0')
     unit = "nsecs"
 
 
@@ -106,6 +111,7 @@ else:
 #b.attach_kprobe(event="blk_mq_end_request", fn_name="trace_stop")
 #b.attach_kprobe(event="blk_mq_end_request_batch", fn_name="trace_stop")
 #b.attach_kprobe(event="blk_mq_complete_request", fn_name="trace_stop")
+#b.attach_kprobe(event="lo_complete_rq", fn_name="trace_stop")
 
 logfile = None
 if args.logfile:
